@@ -1,0 +1,29 @@
+Manifest-Version: 1.0
+Bnd-LastModified: 1585599830426
+Build-Jdk: 1.8.0_201
+Built-By: sarxos
+Bundle-Description: This library allows you to use your PC webcam, IP or
+  network cameras directly from Java. It's compatible with most operatin
+ g systems (Windows, Linux, MacOS).
+Bundle-DocURL: https://github.com/sarxos/webcam-capture/webcam-capture
+Bundle-License: https://github.com/sarxos/oss-parent/master/LICENSE.txt
+Bundle-ManifestVersion: 2
+Bundle-Name: Webcam Capture
+Bundle-SymbolicName: com.github.sarxos.webcam-capture
+Bundle-Vendor: Bartosz Firyn (SarXos)
+Bundle-Version: 0.3.13.SNAPSHOT
+Created-By: Apache Maven Bundle Plugin
+Export-Package: com.github.sarxos.webcam;uses:="javax.swing";version="0.
+ 3.13.SNAPSHOT",com.github.sarxos.webcam.log;version="0.3.13.SNAPSHOT",c
+ om.github.sarxos.webcam.util;version="0.3.13.SNAPSHOT"
+Import-Package: ch.qos.logback.classic;resolution:=optional;version="[1.
+ 0,2)",ch.qos.logback.classic.joran;resolution:=optional;version="[1.0,2
+ )",ch.qos.logback.core;resolution:=optional;version="[1.0,2)",com.githu
+ b.sarxos.webcam.util,javax.imageio,javax.imageio.metadata,javax.imageio
+ .plugins.jpeg,javax.imageio.stream,javax.swing,org.bridj;version="[0.7,
+ 1)",org.bridj.ann;version="[0.7,1)",org.bridj.cpp;version="[0.7,1)",org
+ .slf4j;version="[1.7,2)",org.slf4j.helpers;version="[1.7,2)",sun.misc
+Include-Resources: {maven-resources}
+Require-Capability: osgi.ee;filter:="(&(osgi.ee=JavaSE)(version=1.7))"
+Tool: Bnd-3.5.0.201709291849
+
