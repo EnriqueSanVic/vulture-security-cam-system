@@ -10,22 +10,24 @@ SERVER_IP = '192.168.1.103'
 SERVER_PORT = 4548 
 
 ID_CLIENT = 23
-CAMERA_NAME = 'test'
+CAMERA_NAME = 'Habitacion'
 
 '''
 320x240
+640x480
+1920x1080
 '''
 
-WIDTH_FRAME = 640
-HEIGHT_FRAME = 480
+WIDTH_FRAME = 1920
+HEIGHT_FRAME = 1080
 
-FRAME_FORMAT = 'jpeg'
+FRAME_FORMAT = 'png'
 
 BACKFILL_CHARACTER_STRINGS = "*"
 MAX_CAM_NAME_BYTES = 20
 
 CLOSE_CONNECTION_COMMAND = -2341
-CAM_FRAMES_RECORD = 20
+SEGS_RECORD = 20
 
 errorInit = False
 
@@ -45,8 +47,6 @@ camera.annotate_text_size = 20
 
 client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 client_socket.connect((SERVER_IP, SERVER_PORT))
-
-
 
 
 def getTextInfoFrame()->str:
@@ -70,7 +70,7 @@ def mainLoop():
     #El segundo envío son MAX_CAM_NAME_BYTES bytes del string del nombre de la cámara
     client_socket.send(cameraName)
 
-    while framesCounter < CAM_FRAMES_RECORD:
+    while time.time() - startTime < SEGS_RECORD:
 
         camera.annotate_text = getTextInfoFrame()
 

@@ -4,7 +4,6 @@ en una respresentación binaria de un signed integer 32 bits
 que en esencia es un array de 4 bytes de python, o un objeto bytes
 '''
 def intTobytes(integer:int)-> bytes:
-
     return integer.to_bytes(length=4, byteorder= 'big', signed=True)
 
 
