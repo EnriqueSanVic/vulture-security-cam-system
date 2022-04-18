@@ -1,7 +1,7 @@
-Server/ServerConnectionsManager.java
- Server.ServerConnectionsManager
 Inicio.java
  Inicio
+Server/ServerConnectionsManager.java
+ Server.ServerConnectionsManager
 Server/CamThread.java
  Server.CamThread
 Stream/VideoManager.java
