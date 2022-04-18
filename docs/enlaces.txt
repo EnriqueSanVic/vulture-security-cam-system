@@ -1,1 +1,8 @@
-https://stackoverflow.com/questions/2840190/java-convert-4-bytes-to-int
+
+Documentación 
+
+Estadistica cuota de mercado Android: https://es.statista.com/grafico/18920/cuota-de-mercado-mundial-de-smartphones-por-sistema-operativo/
+
+Documentación técnica
+
+Comversión bytes a int java: https://stackoverflow.com/questions/2840190/java-convert-4-bytes-to-int
