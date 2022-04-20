@@ -8,7 +8,7 @@ import java.util.ArrayList;
 
 public class ServerConnectionsManager {
 
-    private final String IP = "192.168.1.103";
+    private final String IP = "192.168.1.108";
     private final int PORT = 4548;
 
     private ServerSocket server;
