@@ -41,14 +41,26 @@ public class ServerConnectionsManager {
 
                 camThread = new CamThread(socket);
 
+                camList.add(camThread);
+
                 camThread.start();
 
-                camList.add(camThread);
+                System.out.println("Camara iniciada");
+
+                Thread.sleep(5000);
+
+                camThread.startLeaseStreaming();
+
+                Thread.sleep(70000);
+
+                camThread.stopLeaseStreaming();
 
             }
 
         }catch (IOException ex){
             ex.printStackTrace();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
         }
 
     }
