@@ -13,11 +13,15 @@ import java.io.*;
 
 public class VideoManager {
 
+    private final int FPS = 3;
+
     private SeekableByteChannel out;
 
     private AWTSequenceEncoder encoder;
 
     private boolean isEncoding = false;
+
+    private String actualPathEndoding;
 
     public VideoManager() {
     }
@@ -27,8 +31,10 @@ public class VideoManager {
         //solo se puede iniciar una nueva codificación en curso si no hay una uya existente
         if(!isEncoding){
 
+            actualPathEndoding = path;
+
             out = NIOUtils.writableFileChannel(path);
-            encoder = new AWTSequenceEncoder(out, Rational.R(3, 1));
+            encoder = new AWTSequenceEncoder(out, Rational.R(FPS, 1));
             isEncoding = true;
             return true;
 
@@ -40,16 +46,29 @@ public class VideoManager {
     
     public void nextFrame(byte[] image) throws IOException {
 
-        encoder.encodeImage(toBufferedImage(image));
+        if(isEncoding) encoder.encodeImage(toBufferedImage(image));
         
     }
 
-    public void stopAndSave() throws IOException {
-        encoder.finish();
+    public void stopAndSave(){
+
+        try{
+            encoder.finish();
+        }catch (IOException e) {
+            e.printStackTrace();
+        }
+
         NIOUtils.closeQuietly(out);
+
         isEncoding = false;
+
+        System.out.println("Clip guardado: " + actualPathEndoding);
+
     }
 
+    public boolean isEncoding() {
+        return isEncoding;
+    }
 
     // convert BufferedImage to byte[]
     private byte @NotNull [] toByteArray(BufferedImage bi) throws IOException {

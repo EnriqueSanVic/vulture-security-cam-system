@@ -4,13 +4,16 @@ import Stream.VideoManager;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.net.Socket;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 
 public class CamThread extends Thread{
 
-    private final int CLOSE_CONNECTION_COMMAND = -2341;
+    private final int CLIP_DURATION_MINS = 1;
+
+    private final long CLIP_DURATION_NANO_SECS = CLIP_DURATION_MINS * 60000000000l;
 
     private final int MAX_CAM_NAME_BYTES = 20;
 
@@ -18,6 +21,7 @@ public class CamThread extends Thread{
 
     private Socket socket;
     private InputStream input;
+    private OutputStream output;
 
     private VideoManager video;
 
@@ -26,12 +30,15 @@ public class CamThread extends Thread{
 
     boolean active;
 
+    long initTime, actualTime, diffTime;
 
     public CamThread(Socket socket) {
         this.socket = socket;
+        this.active = false;
 
         try {
             input = socket.getInputStream();
+            output = socket.getOutputStream();
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -41,16 +48,9 @@ public class CamThread extends Thread{
     @Override
     public void run() {
 
-        int bufferSize = 0;
-        byte[] bytes;
-
-        active = true;
-
-        video = new VideoManager();
+        byte[] signalbytes;
 
         try{
-
-            video.startMp4Encode("./video.mp4");
 
             //de primeras se lee el número de cliente al que está asociado la cámara
             clientId = readSignedInt32();
@@ -62,13 +62,75 @@ public class CamThread extends Thread{
 
             System.out.println("Cámara: " + camName);
 
+        }catch (IOException ex){
+            ex.printStackTrace();
+        }
+
+        //bucle de inicio de streaming constante
+        while(true){
+
+            while(!active){
+                threadSleep();
+            }
+
+            signalbytes = intToByteArray(VultureCamSignals.START_STREAMING_TO_CAMERA_SIGNAL);
+
+            for (byte i:signalbytes){
+                System.out.println(i);
+            }
+
+            try {
+                output.write(signalbytes);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+            leaseStreaming();
+        }
+
+    }
+
+    public synchronized void startLeaseStreaming(){
+        active = true;
+        this.notify();
+    }
+
+    public void stopLeaseStreaming(){
+
+        //se le envía una señal a la cámara para que deje de enviar el streaming
+        try {
+            output.write(intToByteArray(VultureCamSignals.STOP_STREAMING_TO_CAMERA_SIGNAL));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+    }
+
+
+    private void leaseStreaming(){
+
+        System.out.println("Iniciada la escucha el streaming de la cámara " + camName + " del cliente id " + clientId);
+
+        int bufferSize = 0;
+        byte[] bytes;
+
+        active = true;
+
+        video = new VideoManager();
+
+        try{
+
+            video.startMp4Encode(generateClipPath());
+
+            initTime = System.nanoTime();
+
             //se comienza la lectura
             while(active){
 
                 //se lee el número de bytes que va a tener el próximo frame que se envíe por el socket
                 bufferSize = readSignedInt32();
 
-                if(bufferSize != CLOSE_CONNECTION_COMMAND) {
+                if(bufferSize != VultureCamSignals.CONFIRM_STOP_STREAMING_FROM_CAMERA_SIGNAL) {
 
                     System.out.println("Tamaño frame: " + bufferSize + " bytes");
 
@@ -77,23 +139,71 @@ public class CamThread extends Thread{
 
                     video.nextFrame(bytes);
 
+                    actualTime = System.nanoTime();
+
+                    //si el tiempo de grabación del clip es superior al establecido se guarda un clip y se crea otro
+                    if(isClipEnd()){
+                        video.stopAndSave();
+                        video.startMp4Encode(generateClipPath());
+                        initTime = System.nanoTime();
+                    }
+
                 }else{
                     active = false;
                 }
-
             }
 
-            video.stopAndSave();
-
-            input.close();
-
-            socket.close();
-
-            System.out.println("Cerrada cámara " + camName + " del cliente id " + clientId);
+            System.out.println("Parada la escucha el streaming de la cámara " + camName + " del cliente id " + clientId);
 
         }catch (IOException ex){
             ex.printStackTrace();
+        }finally {
+
+            //Si el clip estaba codificando se cierra y se guarda.
+            if(video.isEncoding()){
+                video.stopAndSave();
+            }
+
         }
+    }
+
+
+
+
+    private void closeSocketConnection() {
+
+        try {
+            input.close();
+            socket.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private synchronized void threadSleep(){
+        try {
+            this.wait();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+            System.out.println(e.getMessage());
+        }
+    }
+
+
+    private boolean isClipEnd(){
+
+        diffTime = actualTime - initTime;
+
+        System.out.println("Segs: " + (diffTime / 1000000000l));
+
+        return (diffTime >= CLIP_DURATION_NANO_SECS);
+    }
+
+    private int numeroClip = 0;
+
+    private String generateClipPath(){
+        ++numeroClip;
+        return "./video" + numeroClip + ".mp4";
     }
 
     private int readSignedInt32 () throws IOException {
@@ -116,5 +226,9 @@ public class CamThread extends Thread{
         //Se eliminan los caracteres de relleno
         return cadena.replace(BACKFILL_CHARACTER_STRINGS,"");
 
+    }
+
+    private byte[] intToByteArray(int num){
+        return ByteBuffer.allocate(4).putInt(num).array();
     }
 }
