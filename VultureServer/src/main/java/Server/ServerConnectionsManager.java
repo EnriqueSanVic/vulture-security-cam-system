@@ -1,5 +1,7 @@
 package Server;
 
+import Views.CamView;
+
 import java.io.*;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
@@ -8,7 +10,7 @@ import java.util.ArrayList;
 
 public class ServerConnectionsManager {
 
-    private final String IP = "192.168.1.108";
+    private final String IP = "192.168.1.68";
     private final int PORT = 4548;
 
     private ServerSocket server;
@@ -45,15 +47,16 @@ public class ServerConnectionsManager {
 
                 camThread.start();
 
+                CamView view = new CamView();
+
+                camThread.addStreamingListener(view);
+
                 System.out.println("Camara iniciada");
 
                 Thread.sleep(5000);
 
-                camThread.startLeaseStreaming();
+                camThread.startStreaming();
 
-                Thread.sleep(70000);
-
-                camThread.stopLeaseStreaming();
 
             }
 

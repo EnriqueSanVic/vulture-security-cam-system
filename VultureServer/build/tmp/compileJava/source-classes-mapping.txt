@@ -1,10 +1,16 @@
-Server/VultureCamSignals.java
- Server.VultureCamSignals
 Stream/VideoManager.java
  Stream.VideoManager
-Inicio.java
- Inicio
+Server/VultureCamSignals.java
+ Server.VultureCamSignals
+Views/CamView.java
+ Views.CamView
+ Views.CamView$1
+ Views.ImageViewProcessor
+Server/StreamingListener.java
+ Server.StreamingListener
 Server/CamThread.java
  Server.CamThread
 Server/ServerConnectionsManager.java
  Server.ServerConnectionsManager
+Inicio.java
+ Inicio

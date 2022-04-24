@@ -8,6 +8,7 @@ import java.io.OutputStream;
 import java.net.Socket;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 
 public class CamThread extends Thread{
 
@@ -19,6 +20,8 @@ public class CamThread extends Thread{
 
     private final String BACKFILL_CHARACTER_STRINGS = "*";
 
+    private ArrayList<StreamingListener> streamingListeners;
+
     private Socket socket;
     private InputStream input;
     private OutputStream output;
@@ -28,13 +31,18 @@ public class CamThread extends Thread{
     private int clientId;
     private String camName;
 
-    boolean active;
+    boolean active, cameraOn;
 
     long initTime, actualTime, diffTime;
 
     public CamThread(Socket socket) {
         this.socket = socket;
         this.active = false;
+        this.cameraOn = true;
+
+        this.setPriority(Thread.MAX_PRIORITY);
+
+        streamingListeners = new ArrayList<StreamingListener>();
 
         try {
             input = socket.getInputStream();
@@ -43,6 +51,14 @@ public class CamThread extends Thread{
             e.printStackTrace();
         }
 
+    }
+
+    public void addStreamingListener(StreamingListener listener){
+        streamingListeners.add(listener);
+    }
+
+    public void removeStreamingListener(StreamingListener listener){
+        streamingListeners.remove(listener);
     }
 
     @Override
@@ -66,8 +82,8 @@ public class CamThread extends Thread{
             ex.printStackTrace();
         }
 
-        //bucle de inicio de streaming constante
-        while(true){
+        //bucle de inicio de streaming constante mientras la camara esté encendidad
+        while(cameraOn){
 
             while(!active){
                 threadSleep();
@@ -75,9 +91,6 @@ public class CamThread extends Thread{
 
             signalbytes = intToByteArray(VultureCamSignals.START_STREAMING_TO_CAMERA_SIGNAL);
 
-            for (byte i:signalbytes){
-                System.out.println(i);
-            }
 
             try {
                 output.write(signalbytes);
@@ -88,18 +101,31 @@ public class CamThread extends Thread{
             leaseStreaming();
         }
 
+        closeSocketConnection();
+
     }
 
-    public synchronized void startLeaseStreaming(){
+    public synchronized void startStreaming(){
         active = true;
         this.notify();
     }
 
-    public void stopLeaseStreaming(){
+    public void stopStreaming(){
 
         //se le envía una señal a la cámara para que deje de enviar el streaming
         try {
             output.write(intToByteArray(VultureCamSignals.STOP_STREAMING_TO_CAMERA_SIGNAL));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+    }
+
+    public void shutdownStreaming(){
+
+        //se le envía una señal a la cámara para que apague el sistema
+        try {
+            output.write(intToByteArray(VultureCamSignals.SHUTDOWN_CAMERA_TO_CAMERA_SIGNAL));
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -111,7 +137,7 @@ public class CamThread extends Thread{
 
         System.out.println("Iniciada la escucha el streaming de la cámara " + camName + " del cliente id " + clientId);
 
-        int bufferSize = 0;
+        int bufferSizeSignal = 0;
         byte[] bytes;
 
         active = true;
@@ -125,17 +151,27 @@ public class CamThread extends Thread{
             initTime = System.nanoTime();
 
             //se comienza la lectura
-            while(active){
+            while(active && cameraOn){
 
                 //se lee el número de bytes que va a tener el próximo frame que se envíe por el socket
-                bufferSize = readSignedInt32();
+                bufferSizeSignal = readSignedInt32();
 
-                if(bufferSize != VultureCamSignals.CONFIRM_STOP_STREAMING_FROM_CAMERA_SIGNAL) {
+                //si la señal es negativa significa que es una señal de comunicación del protocolo
+                if(bufferSizeSignal < 0) {
 
-                    System.out.println("Tamaño frame: " + bufferSize + " bytes");
+                    processSignal(bufferSizeSignal);
+
+                //si es positiva es el tamaño del buffer en bytes por lo tanto se procede a procesar el siguietne frame
+                }else{
+                    System.out.println("Tamaño frame: " + bufferSizeSignal + " bytes");
 
                     //se hace una lectura de los siguientes n bytes para leer la imagen
-                    bytes = input.readNBytes(bufferSize);
+                    bytes = input.readNBytes(bufferSizeSignal);
+
+                    //se manda el frame a todos los escuchadores del streaming
+                    for(StreamingListener listener:streamingListeners){
+                        listener.nextFrame(bytes);
+                    }
 
                     video.nextFrame(bytes);
 
@@ -147,9 +183,6 @@ public class CamThread extends Thread{
                         video.startMp4Encode(generateClipPath());
                         initTime = System.nanoTime();
                     }
-
-                }else{
-                    active = false;
                 }
             }
 
@@ -157,17 +190,31 @@ public class CamThread extends Thread{
 
         }catch (IOException ex){
             ex.printStackTrace();
-        }finally {
-
-            //Si el clip estaba codificando se cierra y se guarda.
-            if(video.isEncoding()){
-                video.stopAndSave();
-            }
-
         }
+
+        //Si el clip estaba codificando se cierra y se guarda.
+        if(video.isEncoding()){
+            video.stopAndSave();
+        }
+
     }
 
 
+    private void processSignal(int signal){
+
+        switch(signal){
+
+            case VultureCamSignals.CONFIRM_STOP_STREAMING_FROM_CAMERA_SIGNAL:
+                active = false;
+                break;
+
+            case VultureCamSignals.CONFIRM_SHUTDOWN_CAMERA_FROM_CAMERA_SIGNAL:
+                active = false;
+                cameraOn = false;
+                break;
+        }
+
+    }
 
 
     private void closeSocketConnection() {
@@ -175,6 +222,9 @@ public class CamThread extends Thread{
         try {
             input.close();
             socket.close();
+
+            System.out.println("Apagada la cámara " + camName + " del cliente id " + clientId);
+
         } catch (IOException e) {
             e.printStackTrace();
         }
