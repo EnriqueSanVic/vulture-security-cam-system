@@ -7,6 +7,9 @@ def intTobytes(integer:int)-> bytes:
     return integer.to_bytes(length=4, byteorder= 'big', signed=True)
 
 
+def bytesToInt(signedInt32Bytes:bytes)->int:
+    return int.from_bytes(signedInt32Bytes, byteorder='big', signed=True)
+
 '''
 Este método prepara el envío binario de un str a su codificación en bytes.
 También prepara para tener una longitud fija de tantos bytes/caracteres como 
