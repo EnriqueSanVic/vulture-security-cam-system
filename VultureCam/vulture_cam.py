@@ -5,15 +5,20 @@ from streaming_system import *
 from constants import *
 import time
 
+client_socket:socket
+
+def closeSocketConnection():
+    global client_socket
+    client_socket.close()
+
 def main():
 
     global cameraName
+    global client_socket
 
     #se pone una prioridad máxima al proceso de este programa
     #Requiere de ser ejecutado con sudo 
     #os.nice(-20)
-
-    client_socket:socket
 
     correctConexion = False
 
@@ -31,21 +36,21 @@ def main():
             client_socket.send(cameraName)
 
             correctConexion = True
+            
         except:
             time.sleep(RETRY_SERVER_CONEXION_SECS)
     
     
     streamingThread:StreamingThread = StreamingThread(client_socket=client_socket)
     leaseSocketThread:SocketListenerThread = SocketListenerThread(client_socket=client_socket)
-
-    signalRouter:SignalRouter = SignalRouter(leaseSocketThread, streamingThread)
-
+    
+    signalRouter:SignalRouter = SignalRouter(leaseSocketThread, streamingThread, closeSocketConnection)
+    
     leaseSocketThread.setSignalRouter(signalRouter)
     streamingThread.setSignalRouter(signalRouter)
 
     #se inicia la escucha de señales del servidor
     leaseSocketThread.start()
-
 
 errorInit = False
 

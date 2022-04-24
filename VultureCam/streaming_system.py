@@ -13,12 +13,16 @@ from constants import *
 
 class SignalRouter:
 
-    def __init__(self, socketListenerThread, streamingThread):
+    def __init__(self, socketListenerThread, streamingThread, closeSocketFunction):
         
         self.socketListenerThread = socketListenerThread
         self.streamingThread = streamingThread
+        self.closeSocketFunction = closeSocketFunction
 
-    def processSignal(self, signal:int):
+    def processSignal(self, signalBytes:bytes):
+        
+        #se transforman en el numero entero de la señal a la que representan
+        signal:int = bytesToInt(signalBytes)
 
         print("Señal recibida: " + str(signal))
 
@@ -27,36 +31,40 @@ class SignalRouter:
 
         elif signal == START_STREAMING_FROM_SERVER_SIGNAL:
             self.streamingThread.startStreaming()
+        elif signal == SHUTDOWN_CAMERA_FROM_SERVER_SIGNAL:
+            self.streamingThread.shutdownStreaming()
+            self.socketListenerThread.stopLease()
+            
 
 
 class SocketListenerThread(Thread):
 
     def __init__(self, client_socket:socket):
-
+        
         Thread.__init__(self,target=self.initLeaseSocket, args=())
 
         self.client_socket = client_socket
+        self.active = True
 
     def setSignalRouter(self, signalRouter:SignalRouter):
         self.signalRouter = signalRouter
+
+    def stopLease(self):
+        self.active = False
 
     def initLeaseSocket(self):
 
         signalBytes:bytes
 
-        signal:int
-
         try:
 
-            fileSocket = self.client_socket.makefile()
-
-            while True:
+            while self.active:
 
                 print("Escuchando señales")
 
                 signalBytes = self.client_socket.recv(4)
 
-                self.signalRouter.processSignal(bytesToInt(signalBytes))
+                self.signalRouter.processSignal(signalBytes)
         
         except:
             pass
@@ -71,17 +79,16 @@ class StreamingThread(Thread):
         self.client_socket = client_socket
 
         self.activo = False
-
-        #Configuración de Pi Camera
-        self.camera = picamera.PiCamera()
-        self.camera.resolution = (WIDTH_FRAME, HEIGHT_FRAME)
-        self.camera.framerate = 25
-        self.camera.iso = 800
-        self.camera.annotate_background = picamera.Color('black')
-        self.camera.annotate_text_size = 20
+        self.shutdown = False
+        
+        
 
     def setSignalRouter(self, signalRouter:SignalRouter):
         self.signalRouter = signalRouter
+
+    def shutdownStreaming(self):
+        self.stopStreaming()
+        self.shutdown = True
 
     def stopStreaming(self):
         self.activo = False
@@ -99,6 +106,14 @@ class StreamingThread(Thread):
 
     def streamingLoop(self):
 
+        #Configuración de Pi Camera
+        self.camera = picamera.PiCamera()
+        self.camera.resolution = (WIDTH_FRAME, HEIGHT_FRAME)
+        self.camera.framerate = FRAME_RATE
+        #self.camera.iso = ISO
+        self.camera.annotate_background = picamera.Color('black')
+        self.camera.annotate_text_size = 20
+
         buffer = io.BytesIO()
 
         startTime = time.time()
@@ -108,17 +123,18 @@ class StreamingThread(Thread):
 
         try: 
 
-            while self.activo:
+            for iter in self.camera.capture_continuous(output=buffer, format=FRAME_FORMAT, use_video_port=True):
 
+                print("captura finalizada")
+                #condicion de salida
+                if not self.activo:
+                    break
+
+                
                 self.camera.annotate_text = self.getTextInfoFrame()
 
-                #Se limpia el buffer
                 buffer.seek(0)
-                buffer.truncate(0)
-
-                self.camera.capture(output=buffer, format=FRAME_FORMAT)
-
-                bufferBytes = buffer.getvalue()
+                bufferBytes = buffer.read()
 
                 bufferSize = len(bufferBytes)
 
@@ -132,11 +148,25 @@ class StreamingThread(Thread):
 
                 self.client_socket.send(bufferBytes)
 
+                
+                #Se limpia el buffer
+                buffer.seek(0)
+                buffer.truncate()
+
+                
+                print("captura iniciada")
+
+            self.camera.close()
+
             endTime = time.time()   
 
             print("Total time: " + str(endTime - startTime)) 
             
-            self.client_socket.send(intTobytes(CONFIRM_STOP_STREAMING_TO_SERVER_SIGNAL))
+            #envío de señal de cierre
+            if not self.shutdown:
+                self.client_socket.send(intTobytes(CONFIRM_STOP_STREAMING_TO_SERVER_SIGNAL))
+            elif self.shutdown:
+                self.client_socket.send(intTobytes(CONFIRM_SHUTDOWN_CAMERA_TO_SERVER_SIGNAL))
 
             print("Conexion cerrada...") 
 
