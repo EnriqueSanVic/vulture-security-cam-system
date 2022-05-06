@@ -10,13 +10,14 @@ repositories {
 }
 
 dependencies {
-    implementation 'org.jetbrains:annotations:20.1.0'
+    implementation 'org.jetbrains:annotations:23.0.0'
     compile files('lib/bridj-0.6.2.jar')
     compile files('lib/slf4j-api-1.7.2.jar')
     compile files('lib/webcam-capture-0.3.13-20200330.202351-7.jar')
     compile files('lib/jcodec-javase-0.2.5.jar')
     compile 'org.mp4parser:isoparser:1.9.41'
     implementation 'org.jcodec:jcodec:0.2.5'
+    implementation 'org.mariadb.jdbc:mariadb-java-client:2.1.2'
     testImplementation 'org.junit.jupiter:junit-jupiter-api:5.8.2'
     testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine'
 }

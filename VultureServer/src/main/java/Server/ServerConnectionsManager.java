@@ -1,5 +1,6 @@
 package Server;
 
+import FileSaveSystem.ClipHandler;
 import Views.CamView;
 
 import java.io.*;
@@ -20,6 +21,8 @@ public class ServerConnectionsManager {
     public ServerConnectionsManager(){
 
         camList = new ArrayList<CamThread>();
+
+        ClipHandler.evaluateBasePath();
 
         try{
 
@@ -47,23 +50,20 @@ public class ServerConnectionsManager {
 
                 camThread.start();
 
-                CamView view = new CamView();
+                //se le da el camThread al procesador de imagen de la vista
+                CamView.getInstance().getStreamingViewProcessor().setCamThread(camThread);
 
-                camThread.addStreamingListener(view);
+                //add the streaming processor
+                camThread.addStreamingListener(CamView.getInstance().getStreamingViewProcessor());
 
                 System.out.println("Camara iniciada");
 
-                Thread.sleep(5000);
-
                 camThread.startStreaming();
-
 
             }
 
         }catch (IOException ex){
             ex.printStackTrace();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
         }
 
     }

@@ -1,6 +1,11 @@
 package Server;
 
-import Stream.VideoManager;
+import Database.DBController;
+import Exceptions.AuthException;
+import FileSaveSystem.ClipHandler;
+import Models.Camera;
+import Models.User;
+import VideoUtils.VideoManager;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -12,7 +17,7 @@ import java.util.ArrayList;
 
 public class CamThread extends Thread{
 
-    private final int CLIP_DURATION_MINS = 1;
+    private final int CLIP_DURATION_MINS = 10;
 
     private final long CLIP_DURATION_NANO_SECS = CLIP_DURATION_MINS * 60000000000l;
 
@@ -26,10 +31,14 @@ public class CamThread extends Thread{
     private InputStream input;
     private OutputStream output;
 
+    private DBController database;
     private VideoManager video;
 
     private int clientId;
     private String camName;
+    private User user;
+    int camID;
+    private Camera camera;
 
     boolean active, cameraOn;
 
@@ -43,6 +52,8 @@ public class CamThread extends Thread{
         this.setPriority(Thread.MAX_PRIORITY);
 
         streamingListeners = new ArrayList<StreamingListener>();
+
+        database = new DBController();
 
         try {
             input = socket.getInputStream();
@@ -65,6 +76,61 @@ public class CamThread extends Thread{
     public void run() {
 
         byte[] signalbytes;
+        boolean isAuth = true;
+
+        database.openConnection();
+
+        try {
+            reciveInitialSignals();
+        } catch (AuthException e) {
+            isAuth = false;
+            System.out.println(e.getMessage());
+        }
+
+        //bucle de inicio de streaming constante mientras la camara esté encendidad
+        while(cameraOn && isAuth){
+
+            while(!active){
+                threadSleep();
+            }
+
+            if(database.isClosed()){
+                database.openConnection();
+            }
+
+            signalbytes = intToByteArray(VultureCamSignals.START_STREAMING_TO_CAMERA_SIGNAL);
+
+            try {
+                output.write(signalbytes);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+            try {
+                leaseStreaming();
+            } catch (IOException e) {
+                //se evita el problema del bucle de creacion de ficheros
+                cameraOn = false;
+                e.printStackTrace();
+            }
+
+            //always closed connection when cam is paused
+            database.closeConnection();
+        }
+
+        //if the user not authenticated then close database
+        if(!isAuth){
+            shutdownStreaming();
+            if(database != null) database.closeConnection();
+        }
+
+        closeSocketConnection();
+
+    }
+
+    private void reciveInitialSignals() throws AuthException {
+
+        boolean correctAuth = true;
 
         try{
 
@@ -73,35 +139,39 @@ public class CamThread extends Thread{
 
             System.out.println("Cliente nº: " + clientId);
 
+            camID = readSignedInt32();
+
+            System.out.println("Cámara id: " + camID);
+
             //se lee el nombre de la cámara con una longitud fija de 20 bytes
             camName = readString(MAX_CAM_NAME_BYTES);
 
             System.out.println("Cámara: " + camName);
 
+            //find and get user
+            user = database.findUser(clientId);
+
+            if(user == null){
+                correctAuth = false;
+            }
+
+            //find and get camera
+            if(user != null){
+                camera = database.findCamera(user, camID);
+
+                //if the camera don´t exist in the db then create it
+                if(camera == null){
+                    database.createCamera(user, camID, camName);
+                }
+            }
+
         }catch (IOException ex){
-            ex.printStackTrace();
+            correctAuth = false;
         }
 
-        //bucle de inicio de streaming constante mientras la camara esté encendidad
-        while(cameraOn){
-
-            while(!active){
-                threadSleep();
-            }
-
-            signalbytes = intToByteArray(VultureCamSignals.START_STREAMING_TO_CAMERA_SIGNAL);
-
-
-            try {
-                output.write(signalbytes);
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-
-            leaseStreaming();
+        if(!correctAuth){
+            throw new AuthException(clientId);
         }
-
-        closeSocketConnection();
 
     }
 
@@ -133,7 +203,7 @@ public class CamThread extends Thread{
     }
 
 
-    private void leaseStreaming(){
+    private void leaseStreaming() throws IOException {
 
         System.out.println("Iniciada la escucha el streaming de la cámara " + camName + " del cliente id " + clientId);
 
@@ -144,9 +214,7 @@ public class CamThread extends Thread{
 
         video = new VideoManager();
 
-        try{
-
-            video.startMp4Encode(generateClipPath());
+            video.startMp4Encode(ClipHandler.generateClipTempPath(user, camera));
 
             initTime = System.nanoTime();
 
@@ -180,7 +248,7 @@ public class CamThread extends Thread{
                     //si el tiempo de grabación del clip es superior al establecido se guarda un clip y se crea otro
                     if(isClipEnd()){
                         video.stopAndSave();
-                        video.startMp4Encode(generateClipPath());
+                        video.startMp4Encode(ClipHandler.generateClipTempPath(user, camera));
                         initTime = System.nanoTime();
                     }
                 }
@@ -188,9 +256,6 @@ public class CamThread extends Thread{
 
             System.out.println("Parada la escucha el streaming de la cámara " + camName + " del cliente id " + clientId);
 
-        }catch (IOException ex){
-            ex.printStackTrace();
-        }
 
         //Si el clip estaba codificando se cierra y se guarda.
         if(video.isEncoding()){
@@ -249,12 +314,8 @@ public class CamThread extends Thread{
         return (diffTime >= CLIP_DURATION_NANO_SECS);
     }
 
-    private int numeroClip = 0;
 
-    private String generateClipPath(){
-        ++numeroClip;
-        return "./video" + numeroClip + ".mp4";
-    }
+
 
     private int readSignedInt32 () throws IOException {
 

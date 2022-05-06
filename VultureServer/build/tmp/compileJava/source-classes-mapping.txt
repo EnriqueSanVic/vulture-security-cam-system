@@ -1,16 +1,27 @@
-Stream/VideoManager.java
- Stream.VideoManager
+Exceptions/AuthException.java
+ Exceptions.AuthException
 Server/VultureCamSignals.java
  Server.VultureCamSignals
+Inicio.java
+ Inicio
+Views/Controllers/StreamingViewProcessor.java
+ Views.Controllers.StreamingViewProcessor
+VideoUtils/VideoManager.java
+ VideoUtils.VideoManager
 Views/CamView.java
  Views.CamView
  Views.CamView$1
- Views.ImageViewProcessor
+Views/Controllers/CamViewControler.java
+ Views.Controllers.CamViewControler
 Server/StreamingListener.java
  Server.StreamingListener
 Server/CamThread.java
  Server.CamThread
+FileSaveSystem/ClipHandler.java
+ FileSaveSystem.ClipHandler
 Server/ServerConnectionsManager.java
  Server.ServerConnectionsManager
-Inicio.java
- Inicio
+Database/DBController.java
+ Database.DBController
+Models/User.java
+ Models.User

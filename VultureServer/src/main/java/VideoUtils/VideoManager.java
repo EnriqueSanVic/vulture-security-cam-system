@@ -1,4 +1,4 @@
-package Stream;
+package VideoUtils;
 
 import org.jetbrains.annotations.NotNull;
 
@@ -36,6 +36,7 @@ public class VideoManager {
             out = NIOUtils.writableFileChannel(path);
             encoder = new AWTSequenceEncoder(out, Rational.R(FPS, 1));
             isEncoding = true;
+
             return true;
 
         }
