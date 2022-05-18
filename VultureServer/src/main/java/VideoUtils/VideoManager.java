@@ -63,8 +63,6 @@ public class VideoManager {
 
         isEncoding = false;
 
-        System.out.println("Clip guardado: " + actualPathEndoding);
-
     }
 
     public boolean isEncoding() {

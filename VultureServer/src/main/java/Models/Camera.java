@@ -1,16 +1,17 @@
 package Models;
 
-import java.util.Date;
+import java.time.LocalDateTime;
+
 
 public class Camera {
 
-    int id;
-    int id_user;
-    String name;
-    Date last_transmission;
-    int ref_hilo;
+    private long id;
+    private long id_user;
+    private String name;
+    private LocalDateTime last_transmission;
+    private long ref_hilo;
 
-    public Camera(int id, int id_user, String name, Date last_transmission, int ref_hilo) {
+    public Camera(long id, long id_user, String name, LocalDateTime last_transmission, long ref_hilo) {
         this.id = id;
         this.id_user = id_user;
         this.name = name;
@@ -18,11 +19,11 @@ public class Camera {
         this.ref_hilo = ref_hilo;
     }
 
-    public int getId() {
+    public long getId() {
         return id;
     }
 
-    public int getId_user() {
+    public long getId_user() {
         return id_user;
     }
 
@@ -30,11 +31,17 @@ public class Camera {
         return name;
     }
 
-    public Date getLast_transmission() {
+    public LocalDateTime getLast_transmission() {
         return last_transmission;
     }
 
-    public int getRef_hilo() {
+    public long getRef_hilo() {
         return ref_hilo;
+    }
+
+    @Override
+    public String toString() {
+        return
+                id + " - " + name;
     }
 }
