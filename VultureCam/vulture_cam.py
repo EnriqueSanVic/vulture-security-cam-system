@@ -18,7 +18,7 @@ def main():
 
     #se pone una prioridad máxima al proceso de este programa
     #Requiere de ser ejecutado con sudo 
-    #os.nice(-20)
+    #os.nice(-10)
 
     correctConexion = False
 
@@ -32,7 +32,10 @@ def main():
             #En el primer envío se manda el ID del usuario al que pertenece esta cámara
             client_socket.send(intTobytes(ID_CLIENT))
 
-            #El segundo envío son MAX_CAM_NAME_BYTES bytes del string del nombre de la cámara
+            #El segundo envío se manda el ID de la cámara del usuario
+            client_socket.send(intTobytes(ID_CAMERA))
+
+            #El tercer envío son MAX_CAM_NAME_BYTES bytes del string del nombre de la cámara
             client_socket.send(cameraName)
 
             correctConexion = True
@@ -41,13 +44,12 @@ def main():
             time.sleep(RETRY_SERVER_CONEXION_SECS)
     
     
-    streamingThread:StreamingThread = StreamingThread(client_socket=client_socket)
     leaseSocketThread:SocketListenerThread = SocketListenerThread(client_socket=client_socket)
     
-    signalRouter:SignalRouter = SignalRouter(leaseSocketThread, streamingThread, closeSocketConnection)
+    signalRouter:SignalRouter = SignalRouter(leaseSocketThread, closeSocketConnection, client_socket)
     
     leaseSocketThread.setSignalRouter(signalRouter)
-    streamingThread.setSignalRouter(signalRouter)
+
 
     #se inicia la escucha de señales del servidor
     leaseSocketThread.start()
