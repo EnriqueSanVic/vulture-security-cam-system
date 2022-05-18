@@ -11,13 +11,16 @@ import socket
 import datetime as dt
 from constants import *
 
+
+firstSignalPassed = False
+
 class SignalRouter:
 
-    def __init__(self, socketListenerThread, streamingThread, closeSocketFunction):
+    def __init__(self, socketListenerThread, closeSocketFunction, socket):
         
         self.socketListenerThread = socketListenerThread
-        self.streamingThread = streamingThread
         self.closeSocketFunction = closeSocketFunction
+        self.socket = socket
 
     def processSignal(self, signalBytes:bytes):
         
@@ -30,8 +33,16 @@ class SignalRouter:
             self.streamingThread.stopStreaming()
 
         elif signal == START_STREAMING_FROM_SERVER_SIGNAL:
+
+            self.streamingThread = StreamingThread(self.socket)
             self.streamingThread.startStreaming()
         elif signal == SHUTDOWN_CAMERA_FROM_SERVER_SIGNAL:
+
+            global firstSignalPassed
+
+            if firstSignalPassed:
+                print("El id del usuario no es reconocido por el servidor.")
+
             self.streamingThread.shutdownStreaming()
             self.socketListenerThread.stopLease()
             
@@ -45,6 +56,7 @@ class SocketListenerThread(Thread):
 
         self.client_socket = client_socket
         self.active = True
+        self.firstSignal = False
 
     def setSignalRouter(self, signalRouter:SignalRouter):
         self.signalRouter = signalRouter
@@ -55,12 +67,16 @@ class SocketListenerThread(Thread):
     def initLeaseSocket(self):
 
         signalBytes:bytes
+        global firstSignalPassed
 
         try:
 
             while self.active:
 
                 print("Escuchando señales")
+
+                if not firstSignalPassed:
+                    firstSignalPassed = True
 
                 signalBytes = self.client_socket.recv(4)
 
@@ -94,6 +110,8 @@ class StreamingThread(Thread):
         self.activo = False
 
     def startStreaming(self):
+
+        print('activo' + str(self.activo))
         
         if self.activo == False:
             self.activo = True
@@ -114,6 +132,8 @@ class StreamingThread(Thread):
         self.camera.annotate_background = picamera.Color('black')
         self.camera.annotate_text_size = 20
 
+        time.sleep(1)
+
         buffer = io.BytesIO()
 
         startTime = time.time()
@@ -123,7 +143,7 @@ class StreamingThread(Thread):
 
         try: 
 
-            for iter in self.camera.capture_continuous(output=buffer, format=FRAME_FORMAT, use_video_port=True):
+            for iter in self.camera.capture_continuous(output=buffer, format=FRAME_FORMAT, use_video_port=False):
 
                 print("captura finalizada")
                 #condicion de salida
@@ -144,11 +164,14 @@ class StreamingThread(Thread):
 
                 signed32IntBytes = intTobytes(bufferSize)
 
+                print("enviando")
+
                 self.client_socket.send(signed32IntBytes)
 
                 self.client_socket.send(bufferBytes)
 
-                
+                print("terminado envio")
+
                 #Se limpia el buffer
                 buffer.seek(0)
                 buffer.truncate()
@@ -171,6 +194,7 @@ class StreamingThread(Thread):
             print("Conexion cerrada...") 
 
         except:
-            pass
+            self.camera.close()
+            self.client_socket.close()
     
 
