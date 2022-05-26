@@ -1,10 +1,16 @@
 package com.example.vultureapp.Views;
 
+import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.graphics.Bitmap;
+import android.os.Build;
 import android.os.Bundle;
+import android.util.Log;
+import android.widget.ImageView;
 import android.widget.TextView;
 
+import com.example.vultureapp.Controllers.CamController;
 import com.example.vultureapp.Models.Camera;
 import com.example.vultureapp.Models.DataSingleton;
 import com.example.vultureapp.R;
@@ -12,14 +18,18 @@ import com.example.vultureapp.R;
 //pensar en implementar: https://exoplayer.dev/ui-components.html
 public class CamActivity extends AppCompatActivity {
 
-    private TextView labCamName;
+    private CamController controller;
 
-    private Camera camera;
+    private TextView labCamName;
+    private ImageView imageLayer;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_cam);
+
+        controller = new CamController(this);
 
         confAppBar();
         confElements();
@@ -30,13 +40,8 @@ public class CamActivity extends AppCompatActivity {
         boolean initError = false;
 
         if (extras != null) {
-            int camId = extras.getInt(ListCamActivity.CAM_ID_EXTRA);
-            camera = DataSingleton.getInstance().findCameraId(camId);
-
-            if(camera == null){
-                initError = true;
-            }
-
+            long camId = extras.getLong(ListCamActivity.CAM_ID_EXTRA);
+            initError = controller.loadCamera(camId);
         }else{
             initError = true;
         }
@@ -45,13 +50,18 @@ public class CamActivity extends AppCompatActivity {
             finish();
         }
 
-        labCamName.setText(camera.getId() + " - " + camera.getName());
+        controller.conf();
 
+    }
+
+    public void setHeaderText(String header){
+        labCamName.setText(header);
     }
 
     private void confElements() {
 
         labCamName = findViewById(R.id.labCamName);
+        imageLayer = findViewById(R.id.imageLayer);
 
     }
 
@@ -59,4 +69,12 @@ public class CamActivity extends AppCompatActivity {
         getSupportActionBar().setDisplayShowHomeEnabled(true);
         getSupportActionBar().setIcon(R.mipmap.ic_launcher);
     }
+
+    public void setFrame(Bitmap frame){
+        imageLayer.setImageBitmap(frame);
+    }
+
+
+
+
 }

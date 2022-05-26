@@ -7,7 +7,7 @@
     tools:context=".Views.CamActivity">
 
     <ImageView
-        android:id="@+id/imageView2"
+        android:id="@+id/imageLayer"
         android:layout_width="411dp"
         android:layout_height="372dp"
         android:layout_marginTop="72dp"
@@ -27,7 +27,7 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.5"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/imageView2" />
+        app:layout_constraintTop_toBottomOf="@+id/imageLayer" />
 
     <Button
         android:id="@+id/btnStop"
@@ -39,7 +39,7 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.5"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/imageView2" />
+        app:layout_constraintTop_toBottomOf="@+id/imageLayer" />
 
     <TextView
         android:id="@+id/labCamName"

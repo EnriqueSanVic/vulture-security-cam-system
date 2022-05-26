@@ -27,8 +27,10 @@
         android:layout_marginRight="5dp"
         android:layout_weight="1"
         android:fontFamily="@font/carme"
+        android:paddingLeft="1dp"
+        android:paddingRight="1dp"
         android:text="CLIPS"
-        android:textSize="10sp"
+        android:textSize="10dp"
         android:textStyle="bold" />
 
     <Button
@@ -39,7 +41,9 @@
         android:layout_marginRight="10dp"
         android:layout_weight="1"
         android:fontFamily="@font/carme"
+        android:paddingLeft="1dp"
+        android:paddingRight="1dp"
         android:text="STREAMING"
-        android:textSize="10sp"
+        android:textSize="10dp"
         android:textStyle="bold" />
 </LinearLayout>
