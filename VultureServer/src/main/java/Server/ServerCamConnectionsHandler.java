@@ -13,7 +13,7 @@ import java.util.Map;
 
 public class ServerCamConnectionsHandler extends Thread{
 
-    private final String IP = "192.168.1.80";
+    private final String IP = "192.168.1.68";
     private final int PORT = 4548;
 
     private ServerSocket server;

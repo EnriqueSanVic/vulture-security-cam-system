@@ -10,7 +10,7 @@ import java.util.HashMap;
 
 public class ServerClientConnectionsHandler extends Thread{
 
-    private final String IP = "192.168.1.80";
+    private final String IP = "192.168.1.68";
     private final int PORT = 4547;
 
     private ServerCamConnectionsHandler serverCams;

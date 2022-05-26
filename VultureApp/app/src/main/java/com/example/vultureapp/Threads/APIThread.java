@@ -32,7 +32,7 @@ public class APIThread extends Thread{
     public static final int STOP_STREAMING_TO_CAMERA_SIGNAL = 34;
     public static final int SHUTDOWN_CAMERA_TO_CAMERA_SIGNAL = 78;
 
-    private final String IP = "192.168.1.80";
+    private final String IP = "192.168.1.68";
     private final int PORT = 4547;
 
     private ClipView fileHandler;
