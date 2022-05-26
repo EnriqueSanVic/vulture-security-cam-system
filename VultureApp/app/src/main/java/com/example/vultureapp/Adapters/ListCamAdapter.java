@@ -11,9 +11,11 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.vultureapp.Models.Camera;
 import com.example.vultureapp.R;
+import com.example.vultureapp.Views.ListCamActivity;
 
 public class ListCamAdapter extends RecyclerView.Adapter<ListCamAdapter.ViewHolder>{
 
+    private ListCamActivity context;
     private Camera[] localDataSet;
 
     /**
@@ -45,8 +47,9 @@ public class ListCamAdapter extends RecyclerView.Adapter<ListCamAdapter.ViewHold
      * @param dataSet String[] containing the data to populate views to be used
      * by RecyclerView.
      */
-    public ListCamAdapter(Camera[] dataSet) {
+    public ListCamAdapter(Camera[] dataSet, ListCamActivity context) {
         localDataSet = dataSet;
+        this.context = context;
     }
 
     // Create new views (invoked by the layout manager)
@@ -71,14 +74,14 @@ public class ListCamAdapter extends RecyclerView.Adapter<ListCamAdapter.ViewHold
         viewHolder.btnClips.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                System.out.println("Pulsado boton clips de la cámara " + localDataSet[position].getName());
+                context.createRecListMessageDialog(localDataSet[position]);
             }
         });
 
         viewHolder.btnStreaming.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                System.out.println("Pulsado boton streaming de la cámara " + localDataSet[position].getName());
+                context.goToCamActivity(localDataSet[position]);
             }
         });
     }
