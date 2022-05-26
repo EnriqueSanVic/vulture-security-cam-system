@@ -66,6 +66,38 @@ public class DBController {
         return user;
     }
 
+    public User findUser(String mail, String password){
+
+        final String QUERY = "SELECT * FROM usuarios WHERE mail='" + mail + "' and password='" + password + "'";
+
+        User user = null;
+        Statement state = null;
+
+        try{
+
+            state = connection.createStatement();
+
+            ResultSet res = state.executeQuery(QUERY);
+
+            res.beforeFirst();
+
+            if(res.next()){
+                user = new User(res.getInt(1), res.getString(2), res.getString(3));
+            }
+
+        }catch(SQLException ex) {
+            ex.printStackTrace();
+        }
+
+        try {
+            state.close();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return user;
+    }
+
     public Camera findCamera(User user, long id){
 
         final String QUERY = "SELECT * FROM camaras WHERE id=" + id + " and id_usuario=" + user.getId();
@@ -286,6 +318,77 @@ public class DBController {
         }
 
         return cameras;
+
+    }
+
+
+    public ArrayList<Record> getCamClips(Camera camera) {
+
+        ArrayList<Record> records = new ArrayList<Record>();
+
+        final String QUERY = "SELECT * FROM grabaciones " +
+                "INNER JOIN camaras ON grabaciones.id_camara = camaras.id " +
+                "WHERE camaras.id = " + camera.getId();
+
+        Statement state = null;
+
+        try{
+
+            state = connection.createStatement();
+
+            ResultSet res = state.executeQuery(QUERY);
+
+            res.beforeFirst();
+
+            while(res.next()){
+                records.add(new Record(res.getLong(1), res.getTimestamp(2).toLocalDateTime(), res.getTimestamp(3).toLocalDateTime(), res.getString(4), res.getLong(5)));
+            }
+
+        }catch(SQLException ex) {
+            ex.printStackTrace();
+        }
+
+        try {
+            state.close();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return records;
+
+
+    }
+
+    public Record findRecord(long id) {
+
+        final String QUERY = "SELECT * FROM grabaciones WHERE id=" + id;
+
+        Record cam = null;
+        Statement state = null;
+
+        try{
+
+            state = connection.createStatement();
+
+            ResultSet res = state.executeQuery(QUERY);
+
+            res.beforeFirst();
+
+            if(res.next()){
+                cam = new Record(res.getLong(1), res.getTimestamp(2).toLocalDateTime(),res.getTimestamp(3).toLocalDateTime(), res.getString(4), res.getLong(5));
+            }
+
+        }catch(SQLException | NullPointerException ex) {
+            ex.printStackTrace();
+        }
+
+        try {
+            state.close();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return cam;
 
     }
 }

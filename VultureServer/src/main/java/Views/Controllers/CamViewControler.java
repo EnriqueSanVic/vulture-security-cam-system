@@ -3,7 +3,7 @@ package Views.Controllers;
 import Database.DBController;
 import Models.Camera;
 import Models.User;
-import Server.ServerConnectionsManager;
+import Server.ServerCamConnectionsHandler;
 import Views.CamView;
 
 import javax.swing.event.ListSelectionEvent;
@@ -18,7 +18,7 @@ public class CamViewControler extends WindowAdapter implements ListSelectionList
 
     private CamView view;
 
-    private ServerConnectionsManager server;
+    private ServerCamConnectionsHandler server;
     private StreamingViewProcessor streamingViewProcessor;
 
     private User user;
@@ -33,7 +33,7 @@ public class CamViewControler extends WindowAdapter implements ListSelectionList
         this.streamingViewProcessor = streamingViewProcessor;
         this.database = new DBController();
         this.database.openConnection();
-        this.server = new ServerConnectionsManager();
+        this.server = new ServerCamConnectionsHandler();
     }
 
     public void windowClosing(WindowEvent e){
@@ -108,7 +108,7 @@ public class CamViewControler extends WindowAdapter implements ListSelectionList
 
             if(refThread != 0l){
 
-                boolean correctInit = server.removeStreamingListenerToCamThread(view, refThread);
+                boolean correctInit = server.removeStreamingListenerToCamThread(view.getStreamingViewProcessor(), refThread);
 
                 if(correctInit){
                     System.out.println("Dejando de escuchar el streaming correctamente.");
@@ -129,7 +129,7 @@ public class CamViewControler extends WindowAdapter implements ListSelectionList
             if(refThread != 0l){ //si la referencia existe
 
                 //se intenta añadir el procesador de streaming se la vista al hilo de la cámara
-                boolean correctInit = server.setStreamingListenerToCamThread(view, refThread);
+                boolean correctInit = server.setStreamingListenerToCamThread(view.getStreamingViewProcessor(), refThread);
 
                 //si el acople ha sido correcto se marca como tal
                 if(correctInit){
@@ -205,7 +205,7 @@ public class CamViewControler extends WindowAdapter implements ListSelectionList
     private void changeServerState() {
 
         if(server == null || !server.isActive()){
-            server = new ServerConnectionsManager();
+            server = new ServerCamConnectionsHandler();
             server.start();
             view.changeBtnServerStateAppearance(true);
             view.setListsEnabled(true);

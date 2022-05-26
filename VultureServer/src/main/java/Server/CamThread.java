@@ -21,7 +21,7 @@ import java.util.ArrayList;
 
 public class CamThread extends Thread{
 
-    private final int CLIP_DURATION_MINS = 30;
+    private final int CLIP_DURATION_MINS = 15;
 
     private final long CLIP_DURATION_NANO_SECS = CLIP_DURATION_MINS * 60000000000l;
 
@@ -391,7 +391,6 @@ public class CamThread extends Thread{
             this.wait();
         } catch (InterruptedException e) {
             e.printStackTrace();
-            System.out.println(e.getMessage());
         }
     }
 
@@ -409,7 +408,7 @@ public class CamThread extends Thread{
 
     private int readSignedInt32 () throws IOException {
 
-        //se leen los siguientes 4 primeros bytes, que son los 323 bits de un numero entero
+        //se leen los siguientes 4 primeros bytes, que son los 32 bits de un numero entero
         byte[] bytes = input.readNBytes(Integer.BYTES);
 
         //se transforman los 4 bytes del signed integer, el tipo primitivo int.

@@ -11,9 +11,9 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 
-public class ServerConnectionsManager extends Thread{
+public class ServerCamConnectionsHandler extends Thread{
 
-    private final String IP = "192.168.1.83";
+    private final String IP = "192.168.1.80";
     private final int PORT = 4548;
 
     private ServerSocket server;
@@ -22,7 +22,7 @@ public class ServerConnectionsManager extends Thread{
 
     private HashMap<Long, CamThread> camList;
 
-    public ServerConnectionsManager(){
+    public ServerCamConnectionsHandler(){
 
         this.setPriority(Thread.MAX_PRIORITY);
 
@@ -147,17 +147,23 @@ public class ServerConnectionsManager extends Thread{
         return false;
     }
 
-    public boolean setStreamingListenerToCamThread(CamView view, long camThreadId){
+    public boolean existCamThread(long camId){
+        System.out.println(camId);
+        System.out.println(camList.get(camId));
+        return (camList.get(camId) != null);
+    }
+
+    public boolean setStreamingListenerToCamThread(StreamingListener listener, long camThreadId){
 
         CamThread camThread = camList.get(camThreadId);
 
         if(camThread != null){
 
             //se le da el camThread al procesador de imagen de la vista
-            view.getStreamingViewProcessor().setCamThread(camThread);
+            listener.setCamThread(camThread);
 
             //add the streaming processor
-            camThread.addStreamingListener(view.getStreamingViewProcessor());
+            camThread.addStreamingListener(listener);
 
             return true;
         }
@@ -165,23 +171,25 @@ public class ServerConnectionsManager extends Thread{
         return false;
     }
 
-    public boolean removeStreamingListenerToCamThread(CamView view, long camThreadId){
+    public boolean removeStreamingListenerToCamThread(StreamingListener listener, long camThreadId){
 
         CamThread camThread = camList.get(camThreadId);
 
         if(camThread != null){
 
             //se le da el camThread al procesador de imagen de la vista
-            view.getStreamingViewProcessor().setCamThread(null);
+            listener.setCamThread(null);
 
             //add the streaming processor
-            camThread.removeStreamingListener(view.getStreamingViewProcessor());
+            camThread.removeStreamingListener(listener);
 
             return true;
         }
 
         return false;
     }
+
+
 
     public boolean isActive() {
         return active;
