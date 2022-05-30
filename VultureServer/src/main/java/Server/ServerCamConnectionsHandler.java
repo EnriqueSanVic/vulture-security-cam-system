@@ -1,9 +1,8 @@
 package Server;
 
 import FileSaveSystem.ClipHandler;
-import Views.CamView;
 
-import java.io.*;
+import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -11,18 +10,22 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 
-public class ServerCamConnectionsHandler extends Thread{
+/**
+ * Hilo que gestiona las conexiones de las cámaras
+ */
+public class ServerCamConnectionsHandler extends Thread {
 
-    private final String IP = "192.168.1.80";
+    private final String IP = "192.168.221.147";
     private final int PORT = 4548;
 
     private ServerSocket server;
 
     private boolean active;
 
-    private HashMap<Long, CamThread> camList;
+    //los hilos que gestionan cada cámara se almacenan en una tabla de hash para tener un rápido acceso a estos sabiendo su id
+    private final HashMap<Long, CamThread> camList;
 
-    public ServerCamConnectionsHandler(){
+    public ServerCamConnectionsHandler() {
 
         this.setPriority(Thread.MAX_PRIORITY);
 
@@ -35,12 +38,15 @@ public class ServerCamConnectionsHandler extends Thread{
 
     }
 
+    /**
+     * Acepta conexiones de cámaras y crea hilos hijos que gestionarán cada cámara mientras el servidor está activo.
+     */
     @Override
     public void run() {
 
         active = true;
 
-        try{
+        try {
 
             server = new ServerSocket();
 
@@ -52,7 +58,7 @@ public class ServerCamConnectionsHandler extends Thread{
 
             CamThread camThread;
 
-            while (active){
+            while (active) {
 
                 System.out.println("Esperando conexion ...");
 
@@ -62,7 +68,7 @@ public class ServerCamConnectionsHandler extends Thread{
 
                 camThread = new CamThread(socket);
 
-                camList.put(Long.valueOf(camThread.getId()),camThread);
+                camList.put(Long.valueOf(camThread.getId()), camThread);
 
                 camThread.start();
 
@@ -75,11 +81,13 @@ public class ServerCamConnectionsHandler extends Thread{
 
 
             //close server connection
-            if(server != null){
+            if (server != null) {
                 server.close();
             }
 
-        }catch (IOException ex){
+        } catch (IOException ex) {
+
+            System.out.println(ex.getMessage());
             System.out.println("server socket is closed");
         }
 
@@ -87,19 +95,19 @@ public class ServerCamConnectionsHandler extends Thread{
 
     }
 
-
-    public void shutdownAllStreamings(){
+    //cierra todos los hilos y coneciones que almacena
+    public void shutdownAllStreamings() {
 
         Iterator<Map.Entry<Long, CamThread>> iter = camList.entrySet().iterator();
 
         //recorre todas las cámaras mandando la señal de apagar el streaming
-        while (iter.hasNext()){
+        while (iter.hasNext()) {
             iter.next().getValue().shutdownStreaming();
         }
 
         //cuando lo haya hecho interrumpirá el socket para que no se quede bloqueado en el hilo en el método .accept() para que no acepte nuevas conexiones
         try {
-            if(server != null){
+            if (server != null) {
                 server.close();
             }
         } catch (IOException e) {
@@ -107,11 +115,12 @@ public class ServerCamConnectionsHandler extends Thread{
         }
     }
 
-    public boolean stopStreaming(long camThreadId){
+    //para el streaming de una cámara
+    public boolean stopStreaming(long camThreadId) {
 
         CamThread camThread = camList.get(camThreadId);
 
-        if(camThread != null){
+        if (camThread != null) {
 
             camThread.stopStreaming();
 
@@ -121,11 +130,12 @@ public class ServerCamConnectionsHandler extends Thread{
         return false;
     }
 
-    public boolean startStreaming(long camThreadId){
+    //inicia el streaming de una cámara
+    public boolean startStreaming(long camThreadId) {
 
         CamThread camThread = camList.get(camThreadId);
 
-        if(camThread != null){
+        if (camThread != null) {
 
             camThread.startStreaming();
 
@@ -135,11 +145,12 @@ public class ServerCamConnectionsHandler extends Thread{
         return false;
     }
 
-    public boolean isCamActive(long camThreadId){
+    //consulta si una cámara está activa
+    public boolean isCamActive(long camThreadId) {
 
         CamThread camThread = camList.get(camThreadId);
 
-        if(camThread != null){
+        if (camThread != null) {
 
             return camThread.isActive();
         }
@@ -147,22 +158,24 @@ public class ServerCamConnectionsHandler extends Thread{
         return false;
     }
 
-    public boolean existCamThread(long camId){
+    //consulta si una cámara existe
+    public boolean existCamThread(long camId) {
         System.out.println(camId);
         System.out.println(camList.get(camId));
         return (camList.get(camId) != null);
     }
 
-    public boolean setStreamingListenerToCamThread(StreamingListener listener, long camThreadId){
+    //añade un escuchador de streaming a una cámara
+    public boolean setStreamingListenerToCamThread(StreamingListener listener, long camThreadId) {
 
         CamThread camThread = camList.get(camThreadId);
 
-        if(camThread != null){
+        if (camThread != null) {
 
             //se le da el camThread al procesador de imagen de la vista
             listener.setCamThread(camThread);
 
-            //add the streaming processor
+            //se añade el escuchador del streaming al hilo de la cámara
             camThread.addStreamingListener(listener);
 
             return true;
@@ -171,11 +184,12 @@ public class ServerCamConnectionsHandler extends Thread{
         return false;
     }
 
-    public boolean removeStreamingListenerToCamThread(StreamingListener listener, long camThreadId){
+    //elimina un escuchador de streaming de una cámara
+    public boolean removeStreamingListenerToCamThread(StreamingListener listener, long camThreadId) {
 
         CamThread camThread = camList.get(camThreadId);
 
-        if(camThread != null){
+        if (camThread != null) {
 
             //se le da el camThread al procesador de imagen de la vista
             listener.setCamThread(null);
@@ -190,13 +204,8 @@ public class ServerCamConnectionsHandler extends Thread{
     }
 
 
-
     public boolean isActive() {
         return active;
-    }
-
-    public void setActive(boolean active) {
-        this.active = active;
     }
 
 

@@ -74,7 +74,11 @@ public class CamActivity extends AppCompatActivity {
         imageLayer.setImageBitmap(frame);
     }
 
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
 
+        controller.shutdownStreaming();
 
-
+    }
 }

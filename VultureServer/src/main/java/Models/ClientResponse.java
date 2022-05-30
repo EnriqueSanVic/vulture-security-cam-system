@@ -4,22 +4,25 @@ import com.google.gson.annotations.SerializedName;
 
 import java.util.ArrayList;
 
+/**
+ * Modelo de una respuesta de alto nivel de para un cliente, este está preparado para ser serializado y deserizalizado en Json con la libraría Gson.
+ */
 public class ClientResponse {
 
     @SerializedName("status")
-    private boolean status;
+    private final boolean status;
 
     @SerializedName("cam_id")
-    private int camId;
+    private final int camId;
 
     @SerializedName("list_of_clips")
-    private ArrayList<ClipResponse> listOfClips;
+    private final ArrayList<ClipResponse> listOfClips;
 
     @SerializedName("list_of_cams")
-    private ArrayList<CamResponse> listOfCams;
+    private final ArrayList<CamResponse> listOfCams;
 
     @SerializedName("n_bytes_of_clip")
-    private long nBytesOfClip;
+    private final long nBytesOfClip;
 
     public ClientResponse(boolean status, int camId, ArrayList<ClipResponse> listOfClips, ArrayList<CamResponse> listOfCams, long nBytesOfClip) {
         this.status = status;
@@ -29,7 +32,7 @@ public class ClientResponse {
         this.nBytesOfClip = nBytesOfClip;
     }
 
-    public static class ClipResponse{
+    public static class ClipResponse {
 
         @SerializedName("id")
         protected long id;
@@ -45,7 +48,7 @@ public class ClientResponse {
 
             ArrayList<ClipResponse> mutateList = new ArrayList<ClipResponse>(list.size());
 
-            for(Record rec:list){
+            for (Record rec : list) {
                 mutateList.add(new ClipResponse(rec.getId(), transformDateTimeName(rec)));
             }
 
@@ -64,7 +67,7 @@ public class ClientResponse {
         }
     }
 
-    public static class CamResponse{
+    public static class CamResponse {
 
         @SerializedName("id")
         protected long id;
@@ -76,11 +79,11 @@ public class ClientResponse {
             this.name = name;
         }
 
-        public static ArrayList<CamResponse> mutateList(ArrayList<Camera> list){
+        public static ArrayList<CamResponse> mutateList(ArrayList<Camera> list) {
 
             ArrayList<CamResponse> mutateList = new ArrayList<CamResponse>(list.size());
 
-            for(Camera cam:list){
+            for (Camera cam : list) {
                 mutateList.add(new CamResponse(cam.getId(), cam.getName()));
             }
             return mutateList;

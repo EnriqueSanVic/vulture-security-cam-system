@@ -4,6 +4,8 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import android.net.Uri;
 import android.os.Bundle;
+import android.view.View;
+import android.widget.ProgressBar;
 
 import com.example.vultureapp.Callbacks.ThreadCallBack;
 import com.example.vultureapp.Models.Request;
@@ -28,6 +30,8 @@ public class ClipView extends AppCompatActivity {
 
     private ClipView ownView;
 
+    private ProgressBar progressBar;
+
     private int clipIdSelected;
 
     @Override
@@ -39,12 +43,15 @@ public class ClipView extends AppCompatActivity {
 
         confAppBar();
         clipViewer = findViewById(R.id.videoViewer);
+        progressBar = findViewById(R.id.progressBar);
 
         Bundle bundle = getIntent().getExtras();
 
         if (bundle != null) {
             clipIdSelected = (int) bundle.getLong(ListCamActivity.CLIP_ID_EXTRA);
         }
+
+        progressBar.setVisibility(View.VISIBLE);
 
         downloadClipData();
 
@@ -89,6 +96,7 @@ public class ClipView extends AppCompatActivity {
             ownView.runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
+                    progressBar.setVisibility(View.GONE);
                     renderVideoViewer(Uri.parse(outputFile.getAbsolutePath()));
                 }
             });
@@ -116,5 +124,8 @@ public class ClipView extends AppCompatActivity {
         }
     }
 
-
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+    }
 }

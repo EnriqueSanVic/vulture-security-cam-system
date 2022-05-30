@@ -1,15 +1,17 @@
 package Models;
 
 import java.time.LocalDateTime;
-import java.util.Date;
 
+/**
+ * Modelo de una grabación.
+ */
 public class Record {
 
     private long id;
-    private LocalDateTime fechaInicio;
-    private LocalDateTime fechaFin;
-    private String path;
-    private long id_camara;
+    private final LocalDateTime fechaInicio;
+    private final LocalDateTime fechaFin;
+    private final String path;
+    private final long id_camara;
 
     public Record(long id, LocalDateTime fechaInicio, LocalDateTime fechaFin, String path, long id_camara) {
         this.id = id;

@@ -4,7 +4,6 @@ import Server.CamThread;
 import Server.StreamingListener;
 
 import javax.imageio.ImageIO;
-import javax.swing.*;
 import java.awt.*;
 import java.awt.image.BufferStrategy;
 import java.awt.image.BufferedImage;
@@ -12,9 +11,14 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 
+
+/**
+ * Hilo procesador del streaming que le es redirigido desde el hilo productor seleccionado.
+ * Este hilo tiene la finalidad de escuchar el streaming y pintarlo en el canvas de la vista.
+ */
 public class StreamingViewProcessor extends Thread implements StreamingListener {
 
-    private Canvas view;
+    private final Canvas view;
 
     private CamThread camThread;
 
@@ -22,9 +26,9 @@ public class StreamingViewProcessor extends Thread implements StreamingListener 
 
     private boolean active;
 
-    private BufferStrategy doubleBuffer;
+    private final BufferStrategy doubleBuffer;
 
-    private Graphics2D doubleBufferGraphics;
+    private final Graphics2D doubleBufferGraphics;
 
 
     public StreamingViewProcessor(Canvas view) {
@@ -47,7 +51,7 @@ public class StreamingViewProcessor extends Thread implements StreamingListener 
 
         Image image;
 
-        while(active){
+        while (active) {
 
             waitNotify();
 
@@ -55,11 +59,11 @@ public class StreamingViewProcessor extends Thread implements StreamingListener 
 
             image = toBufferedImage(nextFrameBytes);
 
-            doubleBufferGraphics.drawImage(image,0,0,null);
+            doubleBufferGraphics.drawImage(image, 0, 0, null);
 
-            try{
+            try {
                 doubleBuffer.show();
-            }catch(IllegalStateException ex){
+            } catch (IllegalStateException ex) {
 
             }
         }
@@ -86,7 +90,7 @@ public class StreamingViewProcessor extends Thread implements StreamingListener 
     @Override
     public void nextFrame(byte[] frame) {
 
-        synchronized(this){
+        synchronized (this) {
 
             this.setNextFrameBytes(frame);
             this.notify();
@@ -99,7 +103,7 @@ public class StreamingViewProcessor extends Thread implements StreamingListener 
         this.camThread = camThread;
     }
 
-    private synchronized void waitNotify(){
+    private synchronized void waitNotify() {
         try {
             wait();
         } catch (InterruptedException e) {

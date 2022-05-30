@@ -10,8 +10,10 @@ public class Init {
     public static void main(String[] args){
 
         //init the control panel
-        //CamView.getInstance();
+        CamView.getInstance();
 
+
+        /*
 
         ServerCamConnectionsHandler servCam = new ServerCamConnectionsHandler();
 
@@ -21,11 +23,7 @@ public class Init {
 
         servCli.start();
 
-        /*
 
-        server.start();
-
-        server.setStreamingListenerToCamThread(CamView.getInstance(),23l);
 
         */
 

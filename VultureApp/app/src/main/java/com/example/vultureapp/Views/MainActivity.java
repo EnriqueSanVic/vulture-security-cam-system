@@ -11,6 +11,10 @@ import android.widget.Toast;
 import com.example.vultureapp.Controllers.MainController;
 import com.example.vultureapp.R;
 
+
+/**
+ * Vista de loggin
+ */
 public class MainActivity extends AppCompatActivity {
 
     private EditText inputEmail;

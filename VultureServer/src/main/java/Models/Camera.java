@@ -2,14 +2,16 @@ package Models;
 
 import java.time.LocalDateTime;
 
-
+/**
+ * Modelo de cámara.
+ */
 public class Camera {
 
-    private long id;
-    private long id_user;
-    private String name;
-    private LocalDateTime last_transmission;
-    private long ref_hilo;
+    private final long id;
+    private final long id_user;
+    private final String name;
+    private final LocalDateTime last_transmission;
+    private final long ref_hilo;
 
     public Camera(long id, long id_user, String name, LocalDateTime last_transmission, long ref_hilo) {
         this.id = id;

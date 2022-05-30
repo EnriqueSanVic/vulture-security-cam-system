@@ -18,10 +18,10 @@ public class CamController {
 
     private Camera camera;
 
+    private Bitmap frame;
 
     public CamController(CamActivity view) {
         this.view = view;
-
 
     }
 
@@ -83,11 +83,11 @@ public class CamController {
 
     }
 
-    private Bitmap frame;
 
 
+    public void shutdownStreaming() {
 
+        APIThread.getInstance().shutdownStreaming();
 
-
-
+    }
 }

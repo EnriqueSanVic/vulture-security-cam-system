@@ -16,6 +16,10 @@ import java.awt.event.MouseEvent;
 import java.io.IOException;
 import java.io.InputStream;
 
+
+/**
+ * Vista de la administración.
+ */
 public class CamView extends JFrame {
 
 
@@ -24,9 +28,10 @@ public class CamView extends JFrame {
     public static final String CAMERA_BUTTON_COMMAND = "Cam_StartOrStop";
 
     private static Font CARME_FONT;
+    private static CamView singelton = null;
 
     //read font from resources
-    static{
+    static {
 
         InputStream is = CamView.class.getClassLoader().getResourceAsStream("Fonts/Carme.ttf");
         try {
@@ -38,10 +43,8 @@ public class CamView extends JFrame {
         }
     }
 
-    private Font carmeTitleFont, carmeListFont, carmeHeadFont, carmeBodyFont, carmeStaticBodyFont;
-
     private final int WIDTH = 1300, HEIGHT = 660;
-    private final int WIDTH_STREAMING_AREA= 640, HEIGHT_STREAMING_AREA = 480;
+    private final int WIDTH_STREAMING_AREA = 640, HEIGHT_STREAMING_AREA = 480;
     private final int X_STREAMING_AREA = 600, Y_STREAMING_AREA = 107;
     private final Color BACKGROUND_COLOR = new Color(85, 85, 85);
     private final Color FOCUS_COLOR = Color.WHITE;
@@ -49,41 +52,9 @@ public class CamView extends JFrame {
 
     private final Font LIST_FONT = new Font("Serif", Font.PLAIN, 17);
     private final Border LIST_BORDER = BorderFactory.createLineBorder(Color.white);
-
-    private CamViewControler controller;
-    private StreamingViewProcessor streamingViewProcessor;
-
-
-    private ImageIcon btnBlue;
-    private ImageIcon btnDarkBlue;
-    private ImageIcon btnReload;
-
-
-    private Canvas streamingArea;
-
-    private JLabel serverStateLabel;
-    private JLabel headBanner;
-    private JLabel usersLabel;
-    private JLabel camerasLabel;
-    private JLabel streamingLabel;
-
-    private JPanel camGroupPanel;
-
-    private JLabel camIdStaticLabel;
-    private JLabel camIdLabel;
-    private JLabel camNameStaticLabel;
-    private JLabel camNameLabel;
-    private JLabel camLastTransmissionDateStaticLabel;
-    private JLabel camLastTransmissionDateLabel;
-
-    private JButton serverStateButton;
-    private JButton reloadCameraSelectedButton;
-    private JButton startStopButton;
-
-    private JList<User> userList;
-    private JList<Camera> cameraList;
-
-    private DefaultListCellRenderer cellRenderer = new DefaultListCellRenderer(){
+    private final CamViewControler controller;
+    private final StreamingViewProcessor streamingViewProcessor;
+    private final DefaultListCellRenderer cellRenderer = new DefaultListCellRenderer() {
         @Override
         public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
             Component c = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
@@ -91,7 +62,7 @@ public class CamView extends JFrame {
                 c.setBackground(FOCUS_COLOR);
                 c.setForeground(FOCUS_FOREGROUND_COLOR);
                 c.setFont(carmeListFont);
-            }else{
+            } else {
                 c.setBackground(FOCUS_FOREGROUND_COLOR);
                 c.setForeground(FOCUS_COLOR);
                 c.setFont(carmeListFont);
@@ -99,19 +70,30 @@ public class CamView extends JFrame {
             return c;
         }
     };
+    private Font carmeTitleFont, carmeListFont, carmeHeadFont, carmeBodyFont, carmeStaticBodyFont;
+    private ImageIcon btnBlue;
+    private ImageIcon btnDarkBlue;
+    private ImageIcon btnReload;
+    private Canvas streamingArea;
+    private JLabel serverStateLabel;
+    private JLabel headBanner;
+    private JLabel usersLabel;
+    private JLabel camerasLabel;
+    private JLabel streamingLabel;
+    private JPanel camGroupPanel;
+    private JLabel camIdStaticLabel;
+    private JLabel camIdLabel;
+    private JLabel camNameStaticLabel;
+    private JLabel camNameLabel;
+    private JLabel camLastTransmissionDateStaticLabel;
+    private JLabel camLastTransmissionDateLabel;
+    private JButton serverStateButton;
+    private JButton reloadCameraSelectedButton;
+    private JButton startStopButton;
+    private JList<User> userList;
+    private JList<Camera> cameraList;
 
-    private static CamView singelton = null;
-
-    public static CamView getInstance(){
-
-        if(singelton == null){
-            singelton = new CamView();
-        }
-
-        return singelton;
-    }
-
-    private CamView(){
+    private CamView() {
 
         super();
 
@@ -140,6 +122,15 @@ public class CamView extends JFrame {
             }
         });
 
+    }
+
+    public static CamView getInstance() {
+
+        if (singelton == null) {
+            singelton = new CamView();
+        }
+
+        return singelton;
     }
 
     private void initialState() {
@@ -180,7 +171,7 @@ public class CamView extends JFrame {
     private void centerWindow() {
 
         Dimension dim = Toolkit.getDefaultToolkit().getScreenSize();
-        this.setLocation(dim.width/2-this.getSize().width/2, dim.height/2-this.getSize().height/2);
+        this.setLocation(dim.width / 2 - this.getSize().width / 2, dim.height / 2 - this.getSize().height / 2);
 
     }
 
@@ -256,10 +247,10 @@ public class CamView extends JFrame {
 
     }
 
-    public void changeStartStopButtonState(boolean active){
-        if(active){
+    public void changeStartStopButtonState(boolean active) {
+        if (active) {
             startStopButton.setText("START");
-        }else{
+        } else {
             startStopButton.setText("STOP");
         }
     }
@@ -310,15 +301,15 @@ public class CamView extends JFrame {
 
     }
 
-    public void setCameraId(String id){
+    public void setCameraId(String id) {
         camIdLabel.setText(id);
     }
 
-    public void setCameraName(String name){
+    public void setCameraName(String name) {
         camNameLabel.setText(name);
     }
 
-    public void setCameraLastTransmission(String lastTransmission){
+    public void setCameraLastTransmission(String lastTransmission) {
         camLastTransmissionDateLabel.setText(lastTransmission);
     }
 
@@ -404,12 +395,12 @@ public class CamView extends JFrame {
 
     }
 
-    public void changeBtnServerStateAppearance(boolean active){
-        if(active){
+    public void changeBtnServerStateAppearance(boolean active) {
+        if (active) {
             serverStateButton.setIcon(btnBlue);
             serverStateButton.setForeground(Color.BLACK);
             serverStateButton.setText("ON");
-        }else{
+        } else {
             serverStateButton.setIcon(btnDarkBlue);
             serverStateButton.setForeground(Color.WHITE);
             serverStateButton.setText("OFF");
@@ -480,8 +471,8 @@ public class CamView extends JFrame {
 
         headBanner.setIcon(image);
 
-        headBanner.setSize(image.getIconWidth(),image.getIconHeight());
-        headBanner.setLocation(0,0);
+        headBanner.setSize(image.getIconWidth(), image.getIconHeight());
+        headBanner.setLocation(0, 0);
 
     }
 
@@ -538,16 +529,16 @@ public class CamView extends JFrame {
 
     }
 
-    public void setListsEnabled(boolean active){
+    public void setListsEnabled(boolean active) {
         userList.setEnabled(active);
         cameraList.setEnabled(active);
     }
 
-    public void setUserListData(User[] userListData){
+    public void setUserListData(User[] userListData) {
         userList.setListData(userListData);
     }
 
-    public void setCameraListData(Camera[] cameraListData){
+    public void setCameraListData(Camera[] cameraListData) {
         cameraList.setListData(cameraListData);
     }
 
@@ -579,20 +570,20 @@ public class CamView extends JFrame {
         return cameraList;
     }
 
-    public User getUserSelected(){
+    public User getUserSelected() {
         return userList.getSelectedValue();
     }
 
-    public Camera getCameraSelected(){
+    public Camera getCameraSelected() {
         return cameraList.getSelectedValue();
     }
 
-    public void cleanUserList(){
+    public void cleanUserList() {
         userList.clearSelection();
         userList.setListData(new User[]{});
     }
 
-    public void clearCamList(){
+    public void clearCamList() {
         cameraList.clearSelection();
         cameraList.setListData(new Camera[]{});
     }
@@ -608,9 +599,10 @@ public class CamView extends JFrame {
 }
 
 
+//clase para dibujar bordes redondos en los elementos de AWT
 class RoundedBorder implements Border {
 
-    private int radius;
+    private final int radius;
 
 
     RoundedBorder(int radius) {
@@ -619,7 +611,7 @@ class RoundedBorder implements Border {
 
 
     public Insets getBorderInsets(Component c) {
-        return new Insets(this.radius+1, this.radius+1, this.radius+2, this.radius);
+        return new Insets(this.radius + 1, this.radius + 1, this.radius + 2, this.radius);
     }
 
 
@@ -629,7 +621,7 @@ class RoundedBorder implements Border {
 
 
     public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) {
-        g.drawRoundRect(x, y, width-1, height-1, radius, radius);
+        g.drawRoundRect(x, y, width - 1, height - 1, radius, radius);
     }
 }
 

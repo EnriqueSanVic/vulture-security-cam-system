@@ -1,27 +1,29 @@
 package Server;
 
-import FileSaveSystem.ClipHandler;
-
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.HashMap;
 
-public class ServerClientConnectionsHandler extends Thread{
+/**
+ * Hilo que gestiona las conexiones de los dispositivos cliente.
+ */
+public class ServerClientConnectionsHandler extends Thread {
 
-    private final String IP = "192.168.1.80";
+    private final String IP = "192.168.221.147";
     private final int PORT = 4547;
 
-    private ServerCamConnectionsHandler serverCams;
+    private final ServerCamConnectionsHandler serverCams;
 
     private ServerSocket server;
 
     private boolean active;
 
-    private HashMap<Long, ClientApiThread> clientList;
+    //almacena los hilos que gestionan cada conexión clinete en una tabla de hash para su rápido acceso.
+    private final HashMap<Long, ClientApiThread> clientList;
 
-    public ServerClientConnectionsHandler(ServerCamConnectionsHandler serCam){
+    public ServerClientConnectionsHandler(ServerCamConnectionsHandler serCam) {
 
         this.setPriority(Thread.MAX_PRIORITY);
 
@@ -33,12 +35,15 @@ public class ServerClientConnectionsHandler extends Thread{
 
     }
 
+    /**
+     * Aceptará conexiones nuevas mientras el servidor está activo
+     */
     @Override
     public void run() {
 
         active = true;
 
-        try{
+        try {
 
             server = new ServerSocket();
 
@@ -50,7 +55,7 @@ public class ServerClientConnectionsHandler extends Thread{
 
             ClientApiThread clientThread;
 
-            while (active){
+            while (active) {
 
                 System.out.println("Esperando conexion ...");
 
@@ -60,7 +65,7 @@ public class ServerClientConnectionsHandler extends Thread{
 
                 clientThread = new ClientApiThread(socket, serverCams);
 
-                clientList.put(Long.valueOf(clientThread.getId()),clientThread);
+                clientList.put(Long.valueOf(clientThread.getId()), clientThread);
 
                 clientThread.start();
 
@@ -70,11 +75,11 @@ public class ServerClientConnectionsHandler extends Thread{
 
 
             //close server connection
-            if(server != null){
+            if (server != null) {
                 server.close();
             }
 
-        }catch (IOException ex){
+        } catch (IOException ex) {
             System.out.println("server socket is closed");
         }
 
@@ -82,4 +87,22 @@ public class ServerClientConnectionsHandler extends Thread{
 
     }
 
+
+    //elimina todos los hilos de clinete
+    public void shutDownAllClients() {
+
+        active = false;
+
+        //close all child sockets
+
+        try {
+            if (server != null) {
+                server.close();
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+
+    }
 }

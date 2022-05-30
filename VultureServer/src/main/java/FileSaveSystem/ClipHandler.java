@@ -11,17 +11,25 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.time.format.DateTimeFormatter;
-import java.util.Calendar;
 import java.util.Locale;
 
+/**
+ * Clase de métodos estáticos relacionados con el manejo de ficheros del storage.
+ */
 public class ClipHandler {
 
-    private static String BASE_PATH = "./storage";
-
     public static DateTimeFormatter FILE_NAME_DATETIME_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd-HH-mm-ss", Locale.ENGLISH);
+    private static final String BASE_PATH = "./storage";
 
-
-    public static Record moveTemFileToFinalPath(User user, Camera camera, Record incompleteRecord){
+    /**
+     * Mueve un registro temporal a path final en la carpeta de uan cámara.
+     *
+     * @param user             usuario.
+     * @param camera           cámara.
+     * @param incompleteRecord grabación temporal.
+     * @return grabación final.
+     */
+    public static Record moveTemFileToFinalPath(User user, Camera camera, Record incompleteRecord) {
 
         Path tempPath = new File(generateClipTempPath(user, camera)).toPath();
 
@@ -33,51 +41,79 @@ public class ClipHandler {
             e.printStackTrace();
         }
 
-        System.out.println("Clip guardado en: " + finalPath.toString());
+        System.out.println("Clip guardado en: " + finalPath);
 
         return new Record(incompleteRecord, finalPath.toString());
 
     }
 
-    private static String generateClipFinalPath(User user, Camera camera, Record record){
+    /**
+     * Genera un path final para una grabación.
+     *
+     * @param user   usuario.
+     * @param camera cámara.
+     * @param record grabación temporal.
+     * @return grabación final.
+     */
+    private static String generateClipFinalPath(User user, Camera camera, Record record) {
 
         File userDir = getUserDir(user);
 
         File camDir = getCameraDir(userDir, camera);
 
 
-        return  camDir.getPath().toString() + "/rec_" +
+        return camDir.getPath() + "/rec_" +
                 FILE_NAME_DATETIME_FORMATTER.format(record.getFechaInicio()) + "_" +
                 FILE_NAME_DATETIME_FORMATTER.format(record.getFechaFin()) +
                 ".mp4";
     }
 
-    public static String generateClipTempPath(User user, Camera camera){
+    /**
+     * Genera el path temporal para un fichero mp4 de una cámara en su directorio.
+     *
+     * @param user   usuario.
+     * @param camera cámara.
+     * @return path temporal.
+     */
+    public static String generateClipTempPath(User user, Camera camera) {
 
         File userDir = getUserDir(user);
 
         File camDir = getCameraDir(userDir, camera);
 
-        return  camDir.getPath().toString() + "/temp.mp4";
+        return camDir.getPath() + "/temp.mp4";
 
     }
 
+    /**
+     * Genera el path de una cámara.
+     *
+     * @param userDir directorio del usuario.
+     * @param camera  cámara.
+     * @return directorio de la cámara.
+     */
     private static File getCameraDir(File userDir, Camera camera) {
 
-        File camDir = new File(userDir.getPath().toString() + "/cam_" + camera.getId());
+        File camDir = new File(userDir.getPath() + "/cam_" + camera.getId());
 
-        if(!camDir.exists()){
+        if (!camDir.exists()) {
             camDir.mkdir();
         }
 
         return camDir;
     }
 
-    private static File getUserDir(User user){
+    /**
+     * Genera el directorio de un usuario.
+     *
+     * @param user usuario.
+     * @return directorio del usuario.
+     */
+    private static File getUserDir(User user) {
 
         File userDir = new File(BASE_PATH + "/user_" + user.getId());
 
-        if(!userDir.exists()){
+        if (!userDir.exists()) {
             userDir.mkdir();
         }
 
@@ -85,11 +121,14 @@ public class ClipHandler {
 
     }
 
-    public static void evaluateBasePath(){
+    /**
+     * Crea el directorio principal del programa.
+     */
+    public static void evaluateBasePath() {
 
         File basepath = new File(BASE_PATH);
 
-        if(!basepath.exists()){
+        if (!basepath.exists()) {
             basepath.mkdir();
         }
 

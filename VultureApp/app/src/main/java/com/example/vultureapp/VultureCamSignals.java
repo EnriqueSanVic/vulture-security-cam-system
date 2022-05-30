@@ -1,7 +1,7 @@
-package Server;
+package com.example.vultureapp;
 
 /**
- * Señales del protocolo de streaming de bajo nivel.
+ * Clase que contiene las constantes de las señales de números enteros del protocolo de streaming.
  */
 public class VultureCamSignals {
 

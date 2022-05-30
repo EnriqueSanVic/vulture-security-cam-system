@@ -6,7 +6,9 @@ import com.example.vultureapp.Callbacks.FrameCallBack;
 import com.example.vultureapp.Callbacks.ThreadCallBack;
 import com.example.vultureapp.Models.Request;
 import com.example.vultureapp.Models.Response;
+import com.example.vultureapp.Security.CryptographyUtils;
 import com.example.vultureapp.Views.ClipView;
+import com.example.vultureapp.VultureCamSignals;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
@@ -25,14 +27,8 @@ import java.nio.ByteOrder;
 
 public class APIThread extends Thread{
 
-    public static final int CONFIRM_STOP_STREAMING_FROM_CAMERA_SIGNAL = -2341;
-    public static final int CONFIRM_SHUTDOWN_CAMERA_FROM_CAMERA_SIGNAL = -6732;
 
-    public static final int START_STREAMING_TO_CAMERA_SIGNAL = 54;
-    public static final int STOP_STREAMING_TO_CAMERA_SIGNAL = 34;
-    public static final int SHUTDOWN_CAMERA_TO_CAMERA_SIGNAL = 78;
-
-    private final String IP = "192.168.1.80";
+    private final String IP = "192.168.221.147";
     private final int PORT = 4547;
 
     private ClipView fileHandler;
@@ -77,7 +73,10 @@ public class APIThread extends Thread{
 
     public void setCredentials(String user, String password){
         this.user = user;
-        this.password = password;
+        //transform password in his hash SHA-256 for send.
+        this.password = CryptographyUtils.hashSHA256(password);
+
+        System.out.println("password: " + this.password);
     }
 
     public void setAuth(boolean auth) {
@@ -141,7 +140,9 @@ public class APIThread extends Thread{
 
             while(active){
 
+
                 while(isWait){
+                    System.out.println("Esperando acción.....");
                     threadWait();
                 }
 
@@ -156,6 +157,8 @@ public class APIThread extends Thread{
                         nextInitStreaming = false;
                         initStreaming();
                     }else{
+
+                        System.out.println("Manejando petición de vuelta.........");
                         handleHighLevelRequest();
                     }
                 }
@@ -171,18 +174,30 @@ public class APIThread extends Thread{
 
     }
 
+    private boolean activeStreaming;
+
     private void initStreaming() throws IOException {
+
+        activeStreaming = true;
 
         bytesLen = readSignedInt32();
 
-        while(true){
+        while(activeStreaming){
 
-            readNBytesInFrameBuffer();
+            if(bytesLen == VultureCamSignals.CONFIRM_SHUTDOWN_CAMERA_FROM_CAMERA_SIGNAL){
+                activeStreaming = false;
+                System.out.println("CONFIRM SHUTDOWN SIGNAL");
+            }else{
 
-            nextFrameCallBack.callBack(frameBuffer, bytesLen);
+                readNBytesInFrameBuffer();
 
-            bytesLen = readSignedInt32();
+                nextFrameCallBack.callBack(frameBuffer, bytesLen);
+
+                bytesLen = readSignedInt32();
+
+            }
         }
+
 
     }
 
@@ -209,7 +224,6 @@ public class APIThread extends Thread{
             successfulBytes = inputLowLevel.read(frameBuffer, actualNBytes, bytesLen - actualNBytes);
 
             if(successfulBytes == -1){
-                System.out.println("ROTOOOOOOOOOOOOOO");
                 break;
             }
 
@@ -235,7 +249,6 @@ public class APIThread extends Thread{
             successfulBytes = inputLowLevel.read(buffer, actualNBytes, nBytes - actualNBytes);
 
             if(successfulBytes == -1){
-                System.out.println("ROTOOOOOOOOOOOOOO");
                 break;
             }
 
@@ -277,6 +290,8 @@ public class APIThread extends Thread{
 
         outputHighLevel.writeUTF(json);
 
+        System.out.println("Esperando input de la respuesta");
+
         dataResponse = inputHighLevel.readUTF();
 
         System.out.println(dataResponse);
@@ -316,5 +331,27 @@ public class APIThread extends Thread{
 
     public void setNextInitStreaming(boolean init){
         this.nextInitStreaming = init;
+    }
+
+    public void shutdownStreaming() {
+
+            Thread sendSignalThread = new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    try {
+                        outputLowLevel.write(intToBytes(VultureCamSignals.SHUTDOWN_CAMERA_TO_CAMERA_SIGNAL));
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
+            });
+
+        sendSignalThread.start();
+
+
+    }
+
+    private byte[] intToBytes(int num){
+        return ByteBuffer.allocate(Integer.BYTES).putInt(num).array();
     }
 }

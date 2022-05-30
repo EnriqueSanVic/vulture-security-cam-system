@@ -4,6 +4,7 @@ import Database.DBController;
 import Models.Camera;
 import Models.User;
 import Server.ServerCamConnectionsHandler;
+import Server.ServerClientConnectionsHandler;
 import Views.CamView;
 
 import javax.swing.event.ListSelectionEvent;
@@ -14,17 +15,20 @@ import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.util.ArrayList;
 
+/**
+ * Controlador de la vista del panel de control.
+ */
 public class CamViewControler extends WindowAdapter implements ListSelectionListener, ActionListener {
 
-    private CamView view;
-
-    private ServerCamConnectionsHandler server;
-    private StreamingViewProcessor streamingViewProcessor;
+    ServerClientConnectionsHandler servCli;
+    private final CamView view;
+    private ServerCamConnectionsHandler serverCam;
+    private final StreamingViewProcessor streamingViewProcessor;
 
     private User user;
     private Camera camera;
 
-    private DBController database;
+    private final DBController database;
     private ArrayList<User> userList;
     private ArrayList<Camera> cameraList;
 
@@ -33,11 +37,12 @@ public class CamViewControler extends WindowAdapter implements ListSelectionList
         this.streamingViewProcessor = streamingViewProcessor;
         this.database = new DBController();
         this.database.openConnection();
-        this.server = new ServerCamConnectionsHandler();
+        this.serverCam = new ServerCamConnectionsHandler();
+
     }
 
-    public void windowClosing(WindowEvent e){
-        synchronized (streamingViewProcessor){
+    public void windowClosing(WindowEvent e) {
+        synchronized (streamingViewProcessor) {
             //stop processor thread
             streamingViewProcessor.setActive(false);
             streamingViewProcessor.notify();
@@ -47,7 +52,7 @@ public class CamViewControler extends WindowAdapter implements ListSelectionList
     }
 
 
-    public void reloadUserList(){
+    public void reloadUserList() {
 
         userList = database.getAllUsers();
 
@@ -55,7 +60,7 @@ public class CamViewControler extends WindowAdapter implements ListSelectionList
 
     }
 
-    public void loadCameraList(){
+    public void loadCameraList() {
 
         cameraList = database.getUserCameras(user);
 
@@ -67,9 +72,9 @@ public class CamViewControler extends WindowAdapter implements ListSelectionList
     @Override
     public void valueChanged(ListSelectionEvent e) {
 
-        if(e.getSource() == view.getUserList()){
+        if (e.getSource() == view.getUserList()) {
             processUserSelected();
-        }else if(e.getSource() == view.getCameraList()){
+        } else if (e.getSource() == view.getCameraList()) {
             processCameraSelected();
         }
 
@@ -77,7 +82,7 @@ public class CamViewControler extends WindowAdapter implements ListSelectionList
 
     private void processUserSelected() {
         user = view.getUserSelected();
-        if(user != null){
+        if (user != null) {
             loadCameraList();
         }
     }
@@ -86,13 +91,13 @@ public class CamViewControler extends WindowAdapter implements ListSelectionList
 
         Camera cameraSelected = view.getCameraSelected();
 
-        if(cameraSelected != camera){
+        if (cameraSelected != camera) {
             removePreviousCameraStreaming();
             camera = cameraSelected;
 
             refreshCameraData();
 
-            if(camera != null){
+            if (camera != null) {
                 loadCameraStreaming();
             }
         }
@@ -100,19 +105,18 @@ public class CamViewControler extends WindowAdapter implements ListSelectionList
     }
 
 
-
     private void removePreviousCameraStreaming() {
-        if(camera != null){
+        if (camera != null) {
 
             long refThread = camera.getRef_hilo();
 
-            if(refThread != 0l){
+            if (refThread != 0l) {
 
-                boolean correctInit = server.removeStreamingListenerToCamThread(view.getStreamingViewProcessor(), refThread);
+                boolean correctInit = serverCam.removeStreamingListenerToCamThread(view.getStreamingViewProcessor(), refThread);
 
-                if(correctInit){
+                if (correctInit) {
                     System.out.println("Dejando de escuchar el streaming correctamente.");
-                }else{
+                } else {
                     System.out.println("La cámara no está transmitiendo.");
                 }
             }
@@ -122,19 +126,19 @@ public class CamViewControler extends WindowAdapter implements ListSelectionList
     //intenta cargar la cámara en el procesador de streaming se la vista
     private void loadCameraStreaming() {
 
-        if(camera != null){
+        if (camera != null) {
 
             long refThread = camera.getRef_hilo(); //se recoge la referencia del hilo de la cámara seleccionada
 
-            if(refThread != 0l){ //si la referencia existe
+            if (refThread != 0l) { //si la referencia existe
 
                 //se intenta añadir el procesador de streaming se la vista al hilo de la cámara
-                boolean correctInit = server.setStreamingListenerToCamThread(view.getStreamingViewProcessor(), refThread);
+                boolean correctInit = serverCam.setStreamingListenerToCamThread(view.getStreamingViewProcessor(), refThread);
 
                 //si el acople ha sido correcto se marca como tal
-                if(correctInit){
+                if (correctInit) {
                     System.out.println("Escuchando streaming correctamente.");
-                }else{
+                } else {
                     System.out.println("La cámara no está transmitiendo.");
                 }
             }
@@ -156,7 +160,7 @@ public class CamViewControler extends WindowAdapter implements ListSelectionList
             case CamView.CHANGE_REFRESH_CAMERA_SELECTED_COMMAND:
                 refreshCameraData();
                 loadCameraStreaming();
-            break;
+                break;
 
             case CamView.CAMERA_BUTTON_COMMAND:
 
@@ -167,12 +171,12 @@ public class CamViewControler extends WindowAdapter implements ListSelectionList
 
     private void startStopStreaming() {
 
-        if(server!=null && server.isActive()){
-            if(server.isCamActive(camera.getRef_hilo())){
-                server.stopStreaming(camera.getRef_hilo());
+        if (serverCam != null && serverCam.isActive()) {
+            if (serverCam.isCamActive(camera.getRef_hilo())) {
+                serverCam.stopStreaming(camera.getRef_hilo());
                 view.changeStartStopButtonState(false);
-            }else{
-                server.startStreaming(camera.getRef_hilo());
+            } else {
+                serverCam.startStreaming(camera.getRef_hilo());
                 view.changeStartStopButtonState(true);
             }
         }
@@ -180,11 +184,11 @@ public class CamViewControler extends WindowAdapter implements ListSelectionList
 
     private void refreshCameraData() {
 
-        if(camera != null){
+        if (camera != null) {
 
             Camera tempCamera = database.findCamera(camera.getId());
 
-            if(tempCamera != null){
+            if (tempCamera != null) {
                 camera = tempCamera;
                 refeshCameraViewInfo();
             }
@@ -194,7 +198,7 @@ public class CamViewControler extends WindowAdapter implements ListSelectionList
 
     private void refeshCameraViewInfo() {
 
-        view.changeStartStopButtonState(server.isCamActive(camera.getRef_hilo()));
+        view.changeStartStopButtonState(serverCam.isCamActive(camera.getRef_hilo()));
 
         view.setCameraId(String.valueOf(camera.getId()));
         view.setCameraName(String.valueOf(camera.getName()));
@@ -204,15 +208,18 @@ public class CamViewControler extends WindowAdapter implements ListSelectionList
 
     private void changeServerState() {
 
-        if(server == null || !server.isActive()){
-            server = new ServerCamConnectionsHandler();
-            server.start();
+        if (serverCam == null || !serverCam.isActive()) {
+            serverCam = new ServerCamConnectionsHandler();
+            servCli = new ServerClientConnectionsHandler(serverCam);
+            serverCam.start();
+            servCli.start();
             view.changeBtnServerStateAppearance(true);
             view.setListsEnabled(true);
             reloadUserList();
 
-        }else{
-            server.shutdownAllStreamings();
+        } else {
+            serverCam.shutdownAllStreamings();
+            servCli.shutDownAllClients();
             view.changeBtnServerStateAppearance(false);
             view.setListsEnabled(false);
             view.cleanUserList();
